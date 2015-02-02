@@ -13,7 +13,7 @@ class SimpleDB:
     self.update_log = [] # We use update_log as a Python stack to track all old values that get changed within each transaction block
     self.value_counts = Counter()
 
-  def set(self, name, new_val, is_rollback=False):print 'User has chosen to SET var ', name, ' to: ', new_val
+  def set(self, name, new_val, is_rollback=False):
     # Get previous value
     old_val = None
     if name in self.data:
@@ -69,7 +69,7 @@ class SimpleDB:
 
   def commit(self):
     self.update_log = []
-    
+
 
 def main():
   db = SimpleDB()
