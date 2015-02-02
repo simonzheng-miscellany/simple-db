@@ -13,21 +13,22 @@ class SimpleDB:
     self.update_log = [] # We use update_log as a Python stack to track all old values that get changed within each transaction block
     self.value_counts = Counter()
 
-  # TODO: test this extensively with unsetting values
-  def set(self, name, new_val):
+  def set(self, name, new_val, is_rollback=False):
     print 'User has chosen to SET var ', name, ' to: ', new_val
-    
     # Get previous value
     old_val = None
     if name in self.data:
       old_val = self.data[name]
 
     # Set new value
-    self.data[name] = new_val
+    if new_val == None:
+      del self.data[name]
+    else:
+      self.data[name] = new_val
 
     # Update the update log's most recent transaction block with oldest value of this variable
-    if (len(self.update_log) > 0) and (name not in self.update_log[0]): # Assume len is O(1) operation using internal counter and not iterating through all elems
-        self.update_log[0][name] = old_val
+    if (not is_rollback) and (len(self.update_log) > 0) and (name not in self.update_log[-1]): # Assume len is O(1) operation using internal counter and not iterating through all elems
+        self.update_log[-1][name] = old_val
 
     # Update value counts
     if old_val != None:
@@ -36,11 +37,17 @@ class SimpleDB:
 
   def get(self, name):
     print 'User has chosen to GET var ', name
-    print self.data[name]
+    if name in self.data:
+      print self.data[name]
+    else:
+      print 'NULL'
 
-  # TODO
   def unset(self, name):
     print 'User has chosen to UNSET var ', name
+    if name in self.data:
+      self.set(name, None)
+    else:
+      print 'ERROR: trying to unset variable that was never set'
 
   def get_num_equal_to(self, val):
     print 'User has chosen to find NUMEQUALTO ', val
@@ -51,14 +58,18 @@ class SimpleDB:
     print 'User chose to begin a new transaction block, so there are now ', len(self.update_log), ' blocks'
 
   def rollback(self):
-    # TODO: For loop through most recent transaction block and reset values that were changed
-
-    self.update_log.pop()
+    # Iterate through recent transaction block and reset changed values
+    if len(self.update_log) > 0:
+      for name, old_val in self.update_log[-1].items():
+        self.set(name, old_val, True)
+      self.update_log.pop()
+    else:
+      print 'NO TRANSACTION'
     print 'User chose to rollback to previous transaction block, so there are now ', len(self.update_log), ' blocks'
 
 
   def commit(self):
-    self.update_log.pop()
+    self.update_log = []
     print 'User chose to commit current transaction block, so there are now ', len(self.update_log), ' blocks'
 
 def main():
@@ -97,9 +108,6 @@ def main():
     else:
       print 'ERROR: Invalid command or number of arguments.'
       print 'See valid commands at: http://www.thumbtack.com/challenges/simple-database'
-    
-    # Print input array
-    print input_arr
 
 if __name__ == '__main__':
   main()
