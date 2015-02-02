@@ -10,36 +10,56 @@ from collections import Counter
 class SimpleDB:
   def __init__(self):
     self.data = {}
-    self.update_log = []
+    self.update_log = [] # We use update_log as a Python stack to track all old values that get changed within each transaction block
     self.value_counts = Counter()
 
-  # TODO
-  def set(self, name, val):
-    print 'User has chosen to SET var ', name, ' to: ', val
+  # TODO: test this extensively with unsetting values
+  def set(self, name, new_val):
+    print 'User has chosen to SET var ', name, ' to: ', new_val
+    
+    # Get previous value
+    old_val = None
+    if name in self.data:
+      old_val = self.data[name]
 
-  # TODO
+    # Set new value
+    self.data[name] = new_val
+
+    # Update the update log's most recent transaction block with oldest value of this variable
+    if (len(self.update_log) > 0) and (name not in self.update_log[0]): # Assume len is O(1) operation using internal counter and not iterating through all elems
+        self.update_log[0][name] = old_val
+
+    # Update value counts
+    if old_val != None:
+      self.value_counts[old_val] -= 1
+    self.value_counts[new_val] += 1
+
   def get(self, name):
     print 'User has chosen to GET var ', name
+    print self.data[name]
 
   # TODO
   def unset(self, name):
     print 'User has chosen to UNSET var ', name
 
-  # TODO
   def get_num_equal_to(self, val):
     print 'User has chosen to find NUMEQUALTO ', val
+    print self.value_counts[val]
 
-  # TODO
   def start_transaction(self):
-    print 'User chose to begin a new transaction block, so there are now '
+    self.update_log.append({})
+    print 'User chose to begin a new transaction block, so there are now ', len(self.update_log), ' blocks'
 
-  # TODO
   def rollback(self):
-    print 'User chose to rollback to previous transaction block'
-  
-  # TODO
+    # TODO: For loop through most recent transaction block and reset values that were changed
+
+    self.update_log.pop()
+    print 'User chose to rollback to previous transaction block, so there are now ', len(self.update_log), ' blocks'
+
+
   def commit(self):
-    print 'User chose to commit current transaction block'
+    self.update_log.pop()
+    print 'User chose to commit current transaction block, so there are now ', len(self.update_log), ' blocks'
 
 def main():
   db = SimpleDB()
